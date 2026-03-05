@@ -154,3 +154,86 @@
     width: auto;
   }
 }
+
+/* Copy Code Button */
+.copy-code-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  background: #f6f8fa;
+  cursor: pointer;
+  z-index: 10;
+  opacity: 0;
+  transition: opacity 0.15s, background 0.15s;
+  color: #57606a;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+}
+
+pre:hover .copy-code-btn {
+  opacity: 1;
+}
+
+.copy-code-btn:hover {
+  background: #eaeef2;
+  border-color: #c8cdd2;
+  color: #24292f;
+}
+
+.copy-code-btn svg {
+  fill: currentColor;
+  display: block;
+}
+
+.copy-code-btn.copied svg path {
+  fill: #3fb950;
+}
+
+/* Copied tooltip */
+.copy-code-tooltip {
+  position: absolute;
+  right: calc(100% + 6px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: #24292f;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.copy-code-tooltip.show {
+  opacity: 1;
+}
+
+/* Dark Mode – copy button */
+@media (prefers-color-scheme: dark) {
+  .copy-code-btn {
+    background: #161b22;
+    border-color: #30363d;
+    color: #8b949e;
+  }
+
+  .copy-code-btn:hover {
+    background: #21262d;
+    border-color: #8b949e;
+    color: #f0f6fc;
+  }
+
+  .copy-code-tooltip {
+    background: #f0f6fc;
+    color: #0d1117;
+  }
+}
