@@ -12,6 +12,11 @@
   cursor: pointer;
   z-index: 100;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  transition: transform 0.1s ease-in-out, background-color 0.1s ease-in-out, border-color 0.1s ease-in-out;
+}
+
+#toc-button:active {
+  transform: scale(0.9);
 }
 
 #toc-button:hover {
@@ -22,6 +27,11 @@
 #toc-button svg {
   fill: currentColor;
   color: #24292f;
+  transition: transform 0.2s ease-in-out;
+}
+
+#toc-button.active svg {
+  transform: rotate(90deg);
 }
 
 /* TOC Panel */

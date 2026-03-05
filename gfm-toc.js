@@ -36,6 +36,7 @@
         e.preventDefault();
         heading.scrollIntoView({ behavior: 'smooth' });
         panel.classList.remove('show');
+        button.classList.remove('active');
       });
       content.appendChild(link);
     });
@@ -44,12 +45,14 @@
   // Toggle panel
   button.addEventListener('click', () => {
     panel.classList.toggle('show');
+    button.classList.toggle('active');
   });
 
   // Close when clicking outside
   document.addEventListener('click', (e) => {
     if (!panel.contains(e.target) && !button.contains(e.target)) {
       panel.classList.remove('show');
+      button.classList.remove('active');
     }
   });
 
