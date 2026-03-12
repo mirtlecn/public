@@ -7,8 +7,10 @@
   button.id = 'toc-button';
   button.setAttribute('aria-label', 'Table of Contents');
   button.innerHTML = `
-    <svg viewBox="0 0 16 16" width="16" height="16">
-      <path d="M5.75 2.5h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1 0-1.5Zm0 5h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1 0-1.5Zm0 5h8.5a.75.75 0 0 1 0 1.5h-8.5a.75.75 0 0 1 0-1.5ZM2 14a1 1 0 1 1 0-2 1 1 0 0 1 0 2Zm1-6a1 1 0 1 1-2 0 1 1 0 0 1 2 0ZM2 4a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"></path>
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+      <path class="toc-icon-line toc-icon-line-top" d="M3 4.5h10"></path>
+      <path class="toc-icon-line toc-icon-line-middle" d="M3 8h10"></path>
+      <path class="toc-icon-line toc-icon-line-bottom" d="M3 11.5h10"></path>
     </svg>
   `;
 
@@ -78,13 +80,16 @@
     </svg>`;
 
     document.querySelectorAll('pre').forEach(pre => {
-      // avoid duplicates
-      if (pre.querySelector('.copy-code-btn')) return;
-
-      // wrap if not already positioned
-      if (getComputedStyle(pre).position === 'static') {
-        pre.style.position = 'relative';
+      let wrapper = pre.parentElement;
+      if (!wrapper || !wrapper.classList.contains('code-block-wrap')) {
+        wrapper = document.createElement('div');
+        wrapper.className = 'code-block-wrap';
+        pre.parentNode.insertBefore(wrapper, pre);
+        wrapper.appendChild(pre);
       }
+
+      // avoid duplicates
+      if (wrapper.querySelector('.copy-code-btn')) return;
 
       const btn = document.createElement('button');
       btn.className = 'copy-code-btn';
@@ -113,7 +118,7 @@
         });
       });
 
-      pre.appendChild(btn);
+      wrapper.appendChild(btn);
     });
   }
 })();

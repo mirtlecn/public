@@ -12,11 +12,11 @@
   cursor: pointer;
   z-index: 100;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-  transition: transform 0.1s ease-in-out, background-color 0.1s ease-in-out, border-color 0.1s ease-in-out;
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
 
 #toc-button:active {
-  transform: scale(0.9);
+  box-shadow: inset 0 1px 2px #1f23281f;
 }
 
 #toc-button:hover {
@@ -25,13 +25,30 @@
 }
 
 #toc-button svg {
-  fill: currentColor;
+  overflow: visible;
   color: #24292f;
-  transition: transform 0.2s ease-in-out;
 }
 
-#toc-button.active svg {
-  transform: rotate(90deg);
+#toc-button .toc-icon-line {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 0.2s ease-in-out, opacity 0.16s ease-in-out;
+}
+
+#toc-button.active .toc-icon-line-top {
+  transform: translateY(3.5px) rotate(45deg);
+}
+
+#toc-button.active .toc-icon-line-middle {
+  opacity: 0;
+}
+
+#toc-button.active .toc-icon-line-bottom {
+  transform: translateY(-3.5px) rotate(-45deg);
 }
 
 /* TOC Panel */
@@ -156,6 +173,10 @@
 }
 
 /* Copy Code Button */
+.code-block-wrap {
+  position: relative;
+}
+
 .copy-code-btn {
   position: absolute;
   top: 6px;
@@ -171,14 +192,10 @@
   background: #f6f8fa;
   cursor: pointer;
   z-index: 10;
-  opacity: 0;
-  transition: opacity 0.15s, background 0.15s;
+  opacity: 1;
+  transition: background 0.15s;
   color: #57606a;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
-}
-
-pre:hover .copy-code-btn {
-  opacity: 1;
 }
 
 .copy-code-btn:hover {
