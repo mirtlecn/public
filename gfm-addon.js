@@ -2,6 +2,8 @@
 (function() {
   'use strict';
 
+  const root = document.documentElement;
+
   // Create TOC button
   const button = document.createElement('button');
   button.id = 'toc-button';
@@ -22,6 +24,110 @@
   // Add to body
   document.body.appendChild(button);
   document.body.appendChild(panel);
+
+  function isTransparentColor(color) {
+    return !color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)';
+  }
+
+  function parseRgbColor(color) {
+    const match = color && color.match(/\d+(\.\d+)?/g);
+    if (!match || match.length < 3) {
+      return null;
+    }
+
+    return match.slice(0, 3).map(Number);
+  }
+
+  function mixColor(baseColor, targetColor, ratio) {
+    const baseRgb = parseRgbColor(baseColor);
+    const targetRgb = parseRgbColor(targetColor);
+
+    if (!baseRgb || !targetRgb) {
+      return baseColor;
+    }
+
+    const mixed = baseRgb.map((value, index) => {
+      return Math.round(value * (1 - ratio) + targetRgb[index] * ratio);
+    });
+
+    return `rgb(${mixed[0]}, ${mixed[1]}, ${mixed[2]})`;
+  }
+
+  function getPageThemeStyles() {
+    const themeElement = document.querySelector('.markdown-body, main, article, [role="main"]') || document.body;
+    const themeStyle = window.getComputedStyle(themeElement);
+    const bodyStyle = window.getComputedStyle(document.body);
+    const htmlStyle = window.getComputedStyle(root);
+    const backgroundColor = isTransparentColor(themeStyle.backgroundColor)
+      ? (isTransparentColor(bodyStyle.backgroundColor) ? htmlStyle.backgroundColor : bodyStyle.backgroundColor)
+      : themeStyle.backgroundColor;
+    const textColor = themeStyle.color || bodyStyle.color || htmlStyle.color;
+
+    return {
+      backgroundColor: isTransparentColor(backgroundColor) ? '#ffffff' : backgroundColor,
+      textColor: textColor || '#24292f',
+      accentColor: themeStyle.getPropertyValue('--ravel-accent-color').trim(),
+      fontFamily: themeStyle.fontFamily || bodyStyle.fontFamily || htmlStyle.fontFamily
+    };
+  }
+
+  function getAccentColor(fallbackColor) {
+    const link = document.querySelector('a[href]');
+    if (!link) {
+      return fallbackColor;
+    }
+
+    const linkColor = window.getComputedStyle(link).color;
+    return isTransparentColor(linkColor) ? fallbackColor : linkColor;
+  }
+
+  function syncTocTheme() {
+    const theme = getPageThemeStyles();
+    const accentColor = theme.accentColor || getAccentColor(theme.textColor);
+
+    root.style.setProperty('--toc-background-color', theme.backgroundColor);
+    root.style.setProperty('--toc-text-color', theme.textColor);
+    root.style.setProperty('--toc-border-color', mixColor(theme.backgroundColor, theme.textColor, 0.18));
+    root.style.setProperty('--toc-hover-background-color', mixColor(theme.backgroundColor, theme.textColor, 0.08));
+    root.style.setProperty('--toc-hover-border-color', mixColor(theme.backgroundColor, theme.textColor, 0.28));
+    root.style.setProperty('--toc-active-shadow-color', mixColor(theme.backgroundColor, theme.textColor, 0.12));
+    root.style.setProperty('--toc-accent-color', accentColor);
+    root.style.setProperty('--toc-muted-color', mixColor(theme.textColor, theme.backgroundColor, 0.3));
+    root.style.setProperty('--toc-subtle-color', mixColor(theme.textColor, theme.backgroundColor, 0.45));
+    root.style.setProperty('--copy-button-background-color', mixColor(theme.backgroundColor, theme.textColor, 0.08));
+    root.style.setProperty('--copy-button-border-color', mixColor(theme.backgroundColor, theme.textColor, 0.18));
+    root.style.setProperty('--copy-button-text-color', mixColor(theme.textColor, theme.backgroundColor, 0.3));
+    root.style.setProperty('--copy-button-hover-background-color', mixColor(theme.backgroundColor, theme.textColor, 0.14));
+    root.style.setProperty('--copy-button-hover-border-color', mixColor(theme.backgroundColor, theme.textColor, 0.28));
+    root.style.setProperty('--copy-button-hover-text-color', theme.textColor);
+    root.style.setProperty('--copy-button-success-color', mixColor(accentColor, 'rgb(63, 185, 80)', 0.35));
+    root.style.setProperty('--copy-tooltip-background-color', theme.textColor);
+    root.style.setProperty('--copy-tooltip-text-color', theme.backgroundColor);
+    if (theme.fontFamily) {
+      root.style.setProperty('--toc-font-family', theme.fontFamily);
+    }
+  }
+
+  function watchSystemThemeChange() {
+    if (!window.matchMedia) {
+      return;
+    }
+
+    const colorSchemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleThemeChange = () => {
+      // Wait one frame so computed styles reflect the new media query state.
+      window.requestAnimationFrame(syncTocTheme);
+    };
+
+    if (typeof colorSchemeQuery.addEventListener === 'function') {
+      colorSchemeQuery.addEventListener('change', handleThemeChange);
+      return;
+    }
+
+    if (typeof colorSchemeQuery.addListener === 'function') {
+      colorSchemeQuery.addListener(handleThemeChange);
+    }
+  }
 
   // Generate TOC
   function generateTOC() {
@@ -61,13 +167,31 @@
   // Initialize
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
+      syncTocTheme();
       generateTOC();
       addCopyButtons();
     });
   } else {
+    syncTocTheme();
     generateTOC();
     addCopyButtons();
   }
+
+  const themeObserver = new MutationObserver(() => {
+    syncTocTheme();
+  });
+
+  themeObserver.observe(root, { attributes: true, attributeFilter: ['class', 'style'] });
+  themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
+
+  window.addEventListener('load', syncTocTheme);
+  window.addEventListener('pageshow', syncTocTheme);
+  document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      syncTocTheme();
+    }
+  });
+  watchSystemThemeChange();
 
   // Copy buttons for code blocks
   function addCopyButtons() {
