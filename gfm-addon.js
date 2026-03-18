@@ -299,8 +299,12 @@
     isPinned = false;
     isPanelHovered = false;
     isButtonHovered = false;
-    syncPinnedButtonVisibility();
     panel.classList.remove('show');
+    if (wasPinned) {
+      setButtonCloseVisibility(true);
+    } else {
+      syncPinnedButtonVisibility();
+    }
     updateButtonIcon();
 
     if (pinnedCloseTimer) {
