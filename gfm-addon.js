@@ -196,6 +196,9 @@
     root.style.setProperty('--copy-button-success-color', mixColor(accentColor, 'rgb(63, 185, 80)', 0.35));
     root.style.setProperty('--copy-tooltip-background-color', theme.textColor);
     root.style.setProperty('--copy-tooltip-text-color', theme.backgroundColor);
+    root.style.setProperty('--image-skeleton-bg', mixColor(theme.backgroundColor, theme.textColor, 0.08));
+    root.style.setProperty('--image-skeleton-highlight', mixColor(theme.backgroundColor, theme.textColor, 0.14));
+    root.style.setProperty('--image-skeleton-border', mixColor(theme.backgroundColor, theme.textColor, 0.12));
     if (theme.fontFamily) {
       root.style.setProperty('--toc-font-family', theme.fontFamily);
     }
@@ -341,6 +344,106 @@
     }
   }
 
+  function isContentImage(image) {
+    if (!image || !image.src) {
+      return false;
+    }
+
+    if (
+      image.closest('table') ||
+      image.closest('g-emoji') ||
+      image.classList.contains('emoji') ||
+      image.closest('.code-block-wrap') ||
+      image.closest('.image-loading-wrap')
+    ) {
+      return false;
+    }
+
+    const container = image.parentElement;
+    if (!container) {
+      return false;
+    }
+
+    const isSupportedContainer =
+      container.matches('p, figure, a, div') ||
+      container.classList.contains('markdown-body');
+
+    if (!isSupportedContainer) {
+      return false;
+    }
+
+    const width = Number(image.getAttribute('width')) || image.naturalWidth || image.width || 0;
+    const height = Number(image.getAttribute('height')) || image.naturalHeight || image.height || 0;
+    if ((width && width < 80) || (height && height < 80)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  function getImageAspectRatio(image) {
+    const width = Number(image.getAttribute('width')) || image.naturalWidth || image.width || 0;
+    const height = Number(image.getAttribute('height')) || image.naturalHeight || image.height || 0;
+    if (!width || !height) {
+      return '16 / 9';
+    }
+
+    return `${width} / ${height}`;
+  }
+
+  function markImageLoaded(wrapper, image) {
+    wrapper.classList.remove('is-loading', 'is-error');
+    wrapper.classList.add('is-loaded');
+    image.classList.add('is-loaded');
+  }
+
+  function markImageError(wrapper, image) {
+    wrapper.classList.remove('is-loading');
+    wrapper.classList.add('is-error');
+    image.classList.add('is-loaded');
+  }
+
+  function enhanceImages() {
+    document.querySelectorAll('.markdown-body img').forEach(image => {
+      if (!isContentImage(image)) {
+        return;
+      }
+
+      if (image.dataset.imageEnhanced === 'true') {
+        return;
+      }
+
+      image.dataset.imageEnhanced = 'true';
+
+      const wrapper = document.createElement('span');
+      wrapper.className = 'image-loading-wrap is-loading';
+      wrapper.style.setProperty('--image-aspect-ratio', getImageAspectRatio(image));
+
+      image.parentNode.insertBefore(wrapper, image);
+      wrapper.appendChild(image);
+      image.classList.add('enhanced-content-image');
+
+      if (image.complete && image.naturalWidth > 0) {
+        markImageLoaded(wrapper, image);
+        return;
+      }
+
+      if (image.complete && image.naturalWidth === 0) {
+        markImageError(wrapper, image);
+        return;
+      }
+
+      image.addEventListener('load', () => {
+        wrapper.style.setProperty('--image-aspect-ratio', getImageAspectRatio(image));
+        markImageLoaded(wrapper, image);
+      }, { once: true });
+
+      image.addEventListener('error', () => {
+        markImageError(wrapper, image);
+      }, { once: true });
+    });
+  }
+
   // Generate TOC
   function generateTOC() {
     const headings = document.querySelectorAll('h1[id], h2[id], h3[id], h4[id]');
@@ -432,6 +535,7 @@
       syncTocTheme();
       baseContentWidth = getContentWidth();
       generateTOC();
+      enhanceImages();
       addCopyButtons();
       updateButtonIcon();
     });
@@ -439,6 +543,7 @@
     syncTocTheme();
     baseContentWidth = getContentWidth();
     generateTOC();
+    enhanceImages();
     addCopyButtons();
     updateButtonIcon();
   }
